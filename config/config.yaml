@@ -1,0 +1,79 @@
+# ==============================================================================
+# Grid Study Configuration for Charged Point Defects (Zenodo: 22756145)
+# Reference: Wang et al., PRX Energy 5, 043001 (2026), DOI: 10.1103/tzwd-cl3y
+# MACE-POLAR Guide: https://mace-docs.readthedocs.io/en/latest/guide/polar_mace.html
+# ==============================================================================
+
+dataset:
+  zenodo_record_id: "22756145"
+  zenodo_url: "https://zenodo.org/records/22756145/files/data.zip?download=1"
+  raw_data_dir: "./data/raw"
+  manifest_path: "./data/manifest.json"
+  # Target defect dataset folder inside Zenodo data.zip:
+  # - "1_FM_benchmark" : PBE reference benchmark for V_Sb(1) in Sb2Se3 (q = -3, -2, -1, 0, +1) [Fig. 1a]
+  # - "2_global_embedding" : HSE06 reference for V_Se(1) in Sb2Se3 (q = -2, -1, 0, +1, +2) [Fig. 3c]
+  benchmark_subset: "1_FM_benchmark"
+  defect_name: "V_Sb(1)"
+  charge_states: [-3, -2, -1, 0, 1]
+  # Spin multiplicity (2S + 1) or total unpaired spin mapping per charge state for V_Sb(1) in Sb2Se3
+  spin_map:
+    -3: 1
+    -2: 2
+    -1: 1
+    0: 2
+    1: 1
+
+relaxation:
+  optimizer: "BFGS"          # Options: "BFGS", "LBFGS", "FIRE"
+  fmax: 0.01                 # Force convergence criterion in eV/A (PRX Energy 10.1103/tzwd-cl3y)
+  max_steps: 500             # Maximum ionic relaxation steps per initial distortion
+  fix_cell: true             # Fixed supercell lattice parameters for point defect calculations
+  # Select 5 representative bond-distortion configurations per charge state:
+  selected_distortions: [-60.0, -30.0, 0.0, 30.0, 60.0]
+  max_distortions: 5
+  output_dir: "./results/relaxed_structures"
+
+evaluation:
+  rmsd_threshold: 0.10       # 0.1 A threshold for successful ground-state structure identification (Fig. 1a)
+  local_cutoff: 5.0          # Cutoff radius (A) around vacancy site for local environment RMSD analysis
+  summary_csv: "./results/grid_study_summary.csv"
+  detailed_csv: "./results/grid_study_all_distortions.csv"
+
+plotting:
+  output_dir: "./results/figures"
+  dpi: 300
+  # Charge states to highlight for 1D PES distortion curves (mirrors Fig. 1b q=0 and Fig. 1c q=-3)
+  pes_highlight_charges: [0, -3]
+
+# ==============================================================================
+# Grid Study Models List
+# PolarMACE Medium (via mace_polar loader) + 3 local models in ./model/
+# ==============================================================================
+models:
+  - name: "MACE-POLAR-1-M (pbc)"
+    type: "mace_polar"
+    model_path: "polar-1-m"  # Loaded via mace_polar(model="polar-1-m", ...) per polar_mace docs
+    device: "cpu"            # Use "cpu" on macOS, or "cuda" on NVIDIA GPU
+    default_dtype: "float64"
+    pbc_handling: "pbc"      # Ewald summation for periodic supercells
+
+  - name: "MACE-MH-1 (Local)"
+    type: "mace_mp"
+    model_path: "./model/mace-mh-1.model"
+    device: "cpu"
+    default_dtype: "float64"
+    head: "omat_pbe"
+
+  - name: "MACE-MPA-0-Medium (Local)"
+    type: "mace_mp"
+    model_path: "./model/mace-mpa-0-medium.model"
+    device: "cpu"
+    default_dtype: "float64"
+    head: "default"
+
+  - name: "MACE-OMAT-0-Medium (Local)"
+    type: "mace_mp"
+    model_path: "./model/mace-omat-0-medium.model"
+    device: "cpu"
+    default_dtype: "float64"
+    head: "default"
