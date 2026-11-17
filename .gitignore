@@ -5,8 +5,11 @@ model/
 *.pth
 data/
 
-# Excluded generated results and ephemeral test configs
-results/
+# Excluded generated results and ephemeral test configs (except test_full figures)
+results/*
+!results/test_full/
+results/test_full/*
+!results/test_full/figures/
 config/config_test.yaml
 config/config_test_full.yaml
 
