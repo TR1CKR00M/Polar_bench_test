@@ -196,16 +196,21 @@ def plot_fig1bc_pes(
     """
     set_pub_style()
     n_panels = len(highlight_charges)
-    fig, axes = plt.subplots(1, n_panels, figsize=(6.2 * n_panels, 5.2), sharey=False)
-    if n_panels == 1:
-        axes = [axes]
+    if n_panels <= 3:
+        nrows, ncols = 1, n_panels
+        fig, axes = plt.subplots(nrows, ncols, figsize=(6.0 * ncols, 5.0), squeeze=False)
+    else:
+        ncols = 3
+        nrows = int(np.ceil(n_panels / ncols))
+        fig, axes = plt.subplots(nrows, ncols, figsize=(5.6 * ncols, 4.5 * nrows), squeeze=False)
 
+    flat_axes = [axes[r][c] for r in range(nrows) for c in range(ncols)]
     all_models = [m for m in df_detailed["model_name"].unique() if m != "DFT Reference"]
     model_order = ["DFT Reference"] + all_models
     pretty_defect = format_defect_math(defect_label)
 
     for p_idx, q in enumerate(highlight_charges):
-        ax = axes[p_idx]
+        ax = flat_axes[p_idx]
         sub_q = df_detailed[
             (df_detailed["charge"] == q) & (df_detailed["distortion_percent"] <= 100.0)
         ].copy()
@@ -263,13 +268,13 @@ def plot_fig1bc_pes(
         panel_letter = chr(ord("b") + p_idx)
         q_str = f"{q:+d}" if q != 0 else "0"
         ax.set_title(f"({panel_letter}) {pretty_defect} PES ($q = {q_str}$)", pad=10)
-        ax.set_xlabel("Bond distortion (%)")
-        if p_idx == 0:
+        if p_idx // ncols == nrows - 1 or p_idx + ncols >= n_panels:
+            ax.set_xlabel("Bond distortion (%)")
+        if p_idx % ncols == 0:
             ax.set_ylabel("Relative energy $\Delta E$ (eV)")
         ax.axhline(0.0, color="#888888", linestyle=":", linewidth=0.8)
 
-    # Shared top legend above both panels so no PES curves are covered
-    handles, labels = axes[0].get_legend_handles_labels()
+    handles, labels = flat_axes[0].get_legend_handles_labels()
     h_circle = plt.Line2D(
         [0],
         [0],
@@ -290,16 +295,33 @@ def plot_fig1bc_pes(
         markersize=7,
         label=f"$\mathrm{{RMSD}} > {threshold:.1f}$ Å (Failed)",
     )
-    fig.legend(
-        handles=handles + [h_circle, h_cross],
-        loc="lower center",
-        bbox_to_anchor=(0.5, 0.98),
-        ncol=4,
-        frameon=True,
-        framealpha=0.95,
-        edgecolor="#cccccc",
-        fontsize=9.0,
-    )
+    all_handles = handles + [h_circle, h_cross]
+
+    # Hide unused subplots; if an empty slot exists in a multi-row grid, place the legend cleanly inside it
+    if len(flat_axes) > n_panels:
+        for empty_idx in range(n_panels, len(flat_axes)):
+            flat_axes[empty_idx].axis("off")
+        flat_axes[n_panels].legend(
+            handles=all_handles,
+            loc="center",
+            frameon=True,
+            framealpha=0.95,
+            edgecolor="#cccccc",
+            fontsize=10.5,
+            title="Models & Structural Accuracy",
+            title_fontsize=11.0,
+        )
+    else:
+        fig.legend(
+            handles=all_handles,
+            loc="lower center",
+            bbox_to_anchor=(0.5, 0.98),
+            ncol=4,
+            frameon=True,
+            framealpha=0.95,
+            edgecolor="#cccccc",
+            fontsize=9.0,
+        )
 
     fig.tight_layout()
     png_path = out_dir / "fig1bc_pes_vs_distortion.png"
