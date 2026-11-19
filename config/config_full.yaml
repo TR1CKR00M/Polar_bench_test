@@ -1,0 +1,70 @@
+dataset:
+  zenodo_record_id: '22756145'
+  zenodo_url: https://zenodo.org/records/22756145/files/data.zip?download=1
+  raw_data_dir: ./data/raw
+  manifest_path: ./results/full/manifest_full.json
+  benchmark_subset: 1_FM_benchmark
+  defect_name: V_Sb(1)
+  charge_states:
+  - -3
+  - -2
+  - -1
+  - 0
+  - 1
+  spin_map:
+    -3: 1
+    -2: 2
+    -1: 1
+    0: 2
+    1: 1
+relaxation:
+  optimizer: BFGS
+  fmax: 0.02
+  max_steps: 300
+  fix_cell: true
+  output_dir: ./results/full/relaxed_structures
+evaluation:
+  rmsd_threshold: 0.1
+  local_cutoff: 5.0
+  summary_csv: ./results/full/grid_study_summary.csv
+  detailed_csv: ./results/full/grid_study_all_distortions.csv
+plotting:
+  output_dir: ./results/full/figures
+  dpi: 300
+  pes_highlight_charges:
+  - -3
+  - -2
+  - -1
+  - 0
+  - 1
+models:
+- name: MACE-POLAR-1-M (pbc)
+  type: mace_polar
+  model_path: polar-1-m
+  device: cpu
+  default_dtype: float32
+  pbc_handling: pbc
+- name: MACE-MH-1 (Local)
+  type: mace_mp
+  model_path: ./model/mace-mh-1.model
+  device: cpu
+  default_dtype: float32
+  head: omat_pbe
+- name: MACE-MPA-0-Medium (Local)
+  type: mace_mp
+  model_path: ./model/mace-mpa-0-medium.model
+  device: cpu
+  default_dtype: float32
+  head: default
+- name: MACE-OMAT-0-Medium (Local)
+  type: mace_mp
+  model_path: ./model/mace-omat-0-medium.model
+  device: cpu
+  default_dtype: float32
+  head: default
+- name: MACE-POLAR-1-M (FT)
+  type: mace_polar
+  model_path: ./model/polar_1m_finetuned/polar_1m_v_sb1_pbe.model
+  device: cpu
+  default_dtype: float32
+  pbc_handling: pbc

@@ -5,11 +5,17 @@ model/
 *.pth
 data/
 
-# Excluded generated results and ephemeral test configs (except test_full figures)
+# Excluded generated results and ephemeral test configs (except test_full figures & full summary/figures)
 results/*
 !results/test_full/
 results/test_full/*
 !results/test_full/figures/
+!results/full/
+results/full/*
+!results/full/figures/
+!results/full/grid_study_summary.csv
+!results/full/grid_study_all_distortions.csv
+!results/full/cross_charge_rmsd_matrices.json
 config/config_test.yaml
 config/config_test_full.yaml
 
