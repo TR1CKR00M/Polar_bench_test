@@ -1,11 +1,13 @@
-# Excluded model weights and datasets
+# Excluded model weights, datasets, and large MD trajectories
 model/
 *.model
 *.pt
 *.pth
+*.extxyz
+*.traj
 data/
 
-# Excluded generated results and ephemeral test configs (except test_full figures & full summary/figures)
+# Excluded generated results and ephemeral test configs (except curated summaries & figures)
 results/*
 !results/test_full/
 results/test_full/*
@@ -16,6 +18,11 @@ results/full/*
 !results/full/grid_study_summary.csv
 !results/full/grid_study_all_distortions.csv
 !results/full/cross_charge_rmsd_matrices.json
+!results/md_600K_q-3/
+results/md_600K_q-3/*
+!results/md_600K_q-3/runs/
+results/md_600K_q-3/runs/*
+!results/md_600K_q-3/runs/run_20261119_131641_61f3e8c1/
 config/config_test.yaml
 config/config_test_full.yaml
 

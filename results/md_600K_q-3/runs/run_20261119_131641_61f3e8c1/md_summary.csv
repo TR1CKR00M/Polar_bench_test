@@ -1,0 +1,6 @@
+run_id,model_name,start_mode,default_dtype,n_atoms,target_ps,survived_ps,completed,stop_reason,mean_temp_K,std_temp_K,mean_pressure_GPa,max_force_seen_eV_A,min_dist_seen_A,ms_per_step,ns_per_day,traj_sha256
+run_20261119_131641_61f3e8c1,MACE-POLAR-1-M (pbc),fresh,float64,59,200.0,200.0,True,completed,600.34,66.0,1.752,4.889,2.247,75.64,1.1422,1b20dcd0a08479d2679d41468a809fe011d85f802dfd301c8c6559d8ea34db39
+run_20261119_131641_61f3e8c1,MACE-POLAR-1-M (FT Stage2),fresh,float32,59,200.0,200.0,True,completed,599.62,66.28,1.355,3.497,2.342,73.33,1.1782,31bffa0c3e521f508fde5ad2da4ae781e8ffe32c954a68e45fbdd61a427bcf1c
+run_20261119_131641_61f3e8c1,MACE-MH-1 (Local),fresh,float32,59,200.0,200.0,True,completed,597.97,65.6,1.512,3.708,2.204,32.78,2.6354,da3e6f700cab1c0f6ea98617938e69ee3b65e084e55f25dde9e13aac5dec45c0
+run_20261119_131641_61f3e8c1,MACE-MPA-0-Medium (Local),fresh,float32,59,200.0,200.0,True,completed,598.77,65.46,2.221,3.894,2.243,25.66,3.3672,353aa78363ae8786b5cacbaf2b7532db1332fcece640ccebd955bcdd33ebdd04
+run_20261119_131641_61f3e8c1,MACE-OMAT-0-Medium (Local),fresh,float32,59,200.0,200.0,True,completed,598.36,65.99,1.644,3.679,2.206,25.97,3.3266,eacb4f824345ef0e1d14b0e64a9890279c567faa052e8d4a93f9071683945c5a
