@@ -1,0 +1,53 @@
+dataset:
+  initial_structure_path: ./data/md_init/CONTCAR_q-3_VSb1
+  manifest_path: ./results/full/manifest_full.json
+  charge: -3
+  spin_multiplicity: 1
+  supercell: [1, 1, 1]   # Use [2, 2, 2] on GPU for larger-cell scaling / dynamics
+
+md:
+  ensemble: NVT
+  thermostat: Langevin
+  temperature_K: 600.0
+  timestep_fs: 1.0
+  friction_per_fs: 0.01
+  n_steps: 20000          # 20 ps baseline (override via --steps, e.g. 200000 for 200 ps on GPU)
+  log_interval: 100       # Thermodynamics & trajectory sampling interval (0.1 ps)
+  seed: 1100              # Common Maxwell-Boltzmann initial velocity seed (cf. Cao et al.)
+  output_dir: ./results/md_600K_q-3
+  stopping_criteria:
+    max_temp_K: 1200.0
+    max_force_eV_A: 50.0
+    min_interatomic_dist_A: 1.4
+
+models:
+- name: MACE-POLAR-1-M (pbc)
+  type: mace_polar
+  model_path: polar-1-m
+  device: cpu
+  default_dtype: float64  # Required for unshifted ~ -2.5e6 eV total energy scale
+  pbc_handling: pbc
+- name: MACE-POLAR-1-M (FT Stage2)
+  type: mace_polar
+  model_path: ./model/polar_1m_finetuned_stage2/polar_1m_v_sb1_pbe_stage2.model
+  device: cpu
+  default_dtype: float32
+  pbc_handling: pbc
+- name: MACE-MH-1 (Local)
+  type: mace_mp
+  model_path: ./model/mace-mh-1.model
+  device: cpu
+  default_dtype: float32
+  head: omat_pbe
+- name: MACE-MPA-0-Medium (Local)
+  type: mace_mp
+  model_path: ./model/mace-mpa-0-medium.model
+  device: cpu
+  default_dtype: float32
+  head: default
+- name: MACE-OMAT-0-Medium (Local)
+  type: mace_mp
+  model_path: ./model/mace-omat-0-medium.model
+  device: cpu
+  default_dtype: float32
+  head: default
