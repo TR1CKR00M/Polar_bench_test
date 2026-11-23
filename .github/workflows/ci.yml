@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lightweight CPU dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ase numpy pandas pyyaml matplotlib ruff pytest
+
+      - name: Run ruff lint check
+        run: ruff check scripts/ tests/
+
+      - name: Check Python and shell syntax
+        run: |
+          python -m py_compile scripts/*.py
+          bash -n slurm/*.slurm *.sh
+
+      - name: Run unit tests
+        run: pytest
