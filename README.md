@@ -1,4 +1,4 @@
-# Polar System Benchmark: Charged Point Defects & MD Reliability
+# Charged Point Defects Polar System Benchmark
 
 A reproducible benchmarking pipeline evaluating [Electrostatic MACE (`MACE-POLAR-1`)](https://mace-docs.readthedocs.io/en/latest/guide/polar_mace.html) (zero-shot and two-stage fine-tuned) alongside neutral/local MACE foundation models (`MACE-MH-1`, `MACE-MPA-0-Medium`, `MACE-OMAT-0-Medium`) on charged point-defect configurations ($V_{\mathrm{Sb}(1)}^q$, $q \in \{-3, -2, -1, 0, +1\}$ in $\mathrm{Sb_2Se_3}$) and 600 K NVT molecular dynamics.
 
