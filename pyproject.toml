@@ -30,4 +30,4 @@ exclude = ["model", "data", "results", ".venv", "__pycache__"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
-ignore = ["E501", "E712", "F541"]
+ignore = ["E501"]

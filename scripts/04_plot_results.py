@@ -173,7 +173,7 @@ def plot_fig1a_rmsd(
         color="#2ca02c",
         alpha=0.16,
         zorder=1,
-        label=f"Successful identification ($\mathrm{{RMSD}} \leq {threshold:.1f}$ Å)",
+        label=rf"Successful identification ($\mathrm{{RMSD}} \leq {threshold:.1f}$ Å)",
     )
     ax.axhline(threshold, color="#2ca02c", linestyle="--", linewidth=1.2, zorder=2)
 
@@ -297,7 +297,8 @@ def plot_fig1bc_pes(
                 zorder=3 if model_name == "DFT Reference" else 2,
             )
 
-            ok = sub_m[sub_m["within_threshold"] == True]
+            mask_ok = sub_m["within_threshold"].astype(bool)
+            ok = sub_m[mask_ok]
             if not ok.empty:
                 ax.scatter(
                     ok["distortion_percent"],
@@ -310,7 +311,7 @@ def plot_fig1bc_pes(
                     zorder=5,
                 )
 
-            bad = sub_m[sub_m["within_threshold"] == False]
+            bad = sub_m[~mask_ok]
             if not bad.empty:
                 ax.scatter(
                     bad["distortion_percent"],
@@ -445,7 +446,7 @@ def plot_cross_charge_matrices(
         axes[r][c].axis("off")
 
     fig.suptitle(
-        "Cross-Charge Structural Sensitivity $\mathrm{RMSD}(q_i, q_j)$ Across Charge States",
+        r"Cross-Charge Structural Sensitivity $\mathrm{RMSD}(q_i, q_j)$ Across Charge States",
         y=1.02,
         fontsize=13,
     )
