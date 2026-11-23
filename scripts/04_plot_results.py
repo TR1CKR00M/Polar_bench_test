@@ -40,18 +40,75 @@ import pandas as pd
 import yaml
 
 
-# Publication color palette & marker cycle
-PALETTE = [
-    "#1f77b4",  # Deep Blue
-    "#d62728",  # Crimson Red
-    "#ff7f0e",  # Amber Orange
-    "#2ca02c",  # Forest Green
-    "#9467bd",  # Muted Purple
-    "#8c564b",  # Chestnut Brown
-    "#e377c2",  # Magenta Pink
-    "#17becf",  # Teal Cyan
+# Customizable display order for models across all figures (edit here or via config.yaml / --model-order)
+DEFAULT_MODEL_ORDER = [
+    "DFT Reference",
+    "MACE-POLAR-1-M (FT Stage2)",
+    "MACE-POLAR-1-M (FT)",
+    "MACE-POLAR-1-M (pbc)",
+    "MACE-MH-1 (Local)",
+    "MACE-MPA-0-Medium (Local)",
+    "MACE-OMAT-0-Medium (Local)",
 ]
-MARKERS = ["o", "s", "^", "D", "v", "P", "p", "*"]
+
+# Warm palette for non-Polar (local) MLIPs and cool gradient for Polar models
+WARM_PALETTE = [
+    "#d73027",  # Vermilion Red
+    "#f46d43",  # Warm Coral Orange
+    "#e6ab02",  # Amber Gold
+    "#a50026",  # Deep Crimson
+    "#d95f02",  # Burnt Orange
+    "#8c510a",  # Warm Ochre
+]
+POLAR_MARKERS = ["o", "v", "^", "p", "*"]
+LOCAL_MARKERS = ["s", "D", "^", "P", "X"]
+
+
+def order_models(available_models: List[str], custom_order: List[str]) -> List[str]:
+    """Order available models according to custom_order, appending any unlisted models at the end."""
+    avail_set = list(dict.fromkeys(available_models))
+    ordered = [m for m in custom_order if m in avail_set]
+    for m in avail_set:
+        if m not in ordered:
+            ordered.append(m)
+    return ordered
+
+
+def is_polar_model(model_name: str, model_type: str = "") -> bool:
+    """Return True if the model belongs to the PolarMACE family."""
+    return "polar" in model_name.lower() or model_type.lower() == "mace_polar"
+
+
+def build_model_styles(
+    df: pd.DataFrame,
+    models: List[str],
+) -> Dict[str, Tuple[Any, str]]:
+    """
+    Assign cool gradient colors to PolarMACE models and distinct warm colors
+    to non-Polar (local) models.
+    """
+    type_map: Dict[str, str] = {}
+    if "model_type" in df.columns:
+        for _, row in df[["model_name", "model_type"]].drop_duplicates().iterrows():
+            type_map[str(row["model_name"])] = str(row["model_type"])
+
+    polar_models = [m for m in models if is_polar_model(m, type_map.get(m, ""))]
+    local_models = [m for m in models if m not in polar_models]
+
+    styles: Dict[str, Tuple[Any, str]] = {}
+
+    # Cool blue-cyan gradient for Polar models (light -> medium -> deep navy)
+    n_polar = len(polar_models)
+    cool_cmap = plt.get_cmap("YlGnBu")
+    cool_vals = np.linspace(0.45, 0.92, n_polar) if n_polar > 1 else [0.75]
+    for idx, m_name in enumerate(polar_models):
+        styles[m_name] = (cool_cmap(float(cool_vals[idx])), POLAR_MARKERS[idx % len(POLAR_MARKERS)])
+
+    # Distinct warm colors for non-Polar models
+    for idx, m_name in enumerate(local_models):
+        styles[m_name] = (WARM_PALETTE[idx % len(WARM_PALETTE)], LOCAL_MARKERS[idx % len(LOCAL_MARKERS)])
+
+    return styles
 
 
 def set_pub_style() -> None:
@@ -90,21 +147,23 @@ def plot_fig1a_rmsd(
     threshold: float,
     defect_label: str,
     out_dir: Path,
+    custom_order: List[str],
 ) -> Path:
     """
     Reproduce PRX Energy Fig. 1(a):
     Ground-state RMSD (Å) relative to DFT-PBE across charge states q,
-    with horizontal offsets per model and a green shaded region for RMSD <= 0.1 Å.
+    with cool-gradient colors for Polar models and warm colors for local models.
     """
     set_pub_style()
-    fig, ax = plt.subplots(figsize=(7.6, 5.0))
+    fig, ax = plt.subplots(figsize=(7.8, 5.2))
 
     charges = sorted(df_summary["charge"].unique())
-    models = list(df_summary["model_name"].unique())
+    models = order_models(list(df_summary["model_name"].unique()), custom_order)
     n_models = len(models)
+    model_styles = build_model_styles(df_summary, models)
 
     # Horizontal jitter offsets within each charge-state column
-    max_span = min(0.55, 0.14 * n_models)
+    max_span = min(0.60, 0.13 * n_models)
     offsets = np.linspace(-max_span / 2.0, max_span / 2.0, n_models) if n_models > 1 else [0.0]
 
     # Green shaded success region (RMSD <= 0.1 Å)
@@ -114,7 +173,7 @@ def plot_fig1a_rmsd(
         color="#2ca02c",
         alpha=0.16,
         zorder=1,
-        label=f"Successful identification ($\mathrm{{RMSD}} \leq {threshold:.1f}$ Å)",
+        label=rf"Successful identification ($\mathrm{{RMSD}} \leq {threshold:.1f}$ Å)",
     )
     ax.axhline(threshold, color="#2ca02c", linestyle="--", linewidth=1.2, zorder=2)
 
@@ -131,17 +190,16 @@ def plot_fig1a_rmsd(
                 xs.append(c_idx + offsets[m_idx])
                 ys.append(float(row["rmsd_A"].values[0]))
 
-        color = PALETTE[m_idx % len(PALETTE)]
-        marker = MARKERS[m_idx % len(MARKERS)]
+        color, _ = model_styles[model_name]
         ax.scatter(
             xs,
             ys,
-            s=76,
+            s=80,
             color=color,
-            marker=marker,
+            marker="o",
             edgecolors="black",
             linewidths=0.75,
-            alpha=0.92,
+            alpha=0.94,
             zorder=4,
             label=model_name,
         )
@@ -187,12 +245,13 @@ def plot_fig1bc_pes(
     threshold: float,
     defect_label: str,
     out_dir: Path,
+    custom_order: List[str],
 ) -> Path:
     """
     Reproduce PRX Energy Fig. 1(b, c):
-    Defect Potential Energy Surfaces (PES) as a function of bond distortion percentage,
-    with energies referenced to each model's minimum and markers indicating
-    RMSD <= 0.1 Å (circles 'o') vs. RMSD > 0.1 Å (crosses 'x').
+    One subplot per charge state q overlaying DFT Reference and all MLIP models,
+    using the exact same cool/warm model color palette as Fig. 1(a) and markers
+    indicating RMSD <= 0.1 Å (circles 'o') vs. RMSD > 0.1 Å (crosses 'X').
     """
     set_pub_style()
     n_panels = len(highlight_charges)
@@ -205,39 +264,41 @@ def plot_fig1bc_pes(
         fig, axes = plt.subplots(nrows, ncols, figsize=(5.6 * ncols, 4.5 * nrows), squeeze=False)
 
     flat_axes = [axes[r][c] for r in range(nrows) for c in range(ncols)]
-    all_models = [m for m in df_detailed["model_name"].unique() if m != "DFT Reference"]
-    model_order = ["DFT Reference"] + all_models
+    df_plot = df_detailed[df_detailed["distortion_percent"] <= 100.0].copy()
+
+    all_present = list(df_plot["model_name"].unique())
+    ordered_all = order_models(all_present, custom_order)
+    mlip_models = [m for m in ordered_all if m != "DFT Reference"]
+    model_order = (["DFT Reference"] if "DFT Reference" in ordered_all else []) + mlip_models
+    model_styles = build_model_styles(df_plot[df_plot["model_name"] != "DFT Reference"], mlip_models)
     pretty_defect = format_defect_math(defect_label)
 
     for p_idx, q in enumerate(highlight_charges):
         ax = flat_axes[p_idx]
-        sub_q = df_detailed[
-            (df_detailed["charge"] == q) & (df_detailed["distortion_percent"] <= 100.0)
-        ].copy()
+        sub_q = df_plot[df_plot["charge"] == q]
 
-        for m_idx, model_name in enumerate(model_order):
+        for model_name in model_order:
             sub_m = sub_q[sub_q["model_name"] == model_name].sort_values("distortion_percent")
             if sub_m.empty:
                 continue
 
-            color = "#111111" if model_name == "DFT Reference" else PALETTE[(m_idx - 1) % len(PALETTE)]
+            color = "#111111" if model_name == "DFT Reference" else model_styles[model_name][0]
             lw = 2.0 if model_name == "DFT Reference" else 1.4
             ls = "-" if model_name == "DFT Reference" else "--"
 
-            # Plot continuous PES curve connecting bond distortions
             ax.plot(
                 sub_m["distortion_percent"],
                 sub_m["rel_energy_eV"],
                 color=color,
                 linestyle=ls,
                 linewidth=lw,
-                alpha=0.85,
+                alpha=0.88,
                 label=model_name,
                 zorder=3 if model_name == "DFT Reference" else 2,
             )
 
-            # Plot circles for RMSD <= threshold
-            ok = sub_m[sub_m["within_threshold"] == True]
+            mask_ok = sub_m["within_threshold"].astype(bool)
+            ok = sub_m[mask_ok]
             if not ok.empty:
                 ax.scatter(
                     ok["distortion_percent"],
@@ -250,8 +311,7 @@ def plot_fig1bc_pes(
                     zorder=5,
                 )
 
-            # Plot crosses for RMSD > threshold
-            bad = sub_m[sub_m["within_threshold"] == False]
+            bad = sub_m[~mask_ok]
             if not bad.empty:
                 ax.scatter(
                     bad["distortion_percent"],
@@ -261,7 +321,7 @@ def plot_fig1bc_pes(
                     color=color,
                     edgecolors="black",
                     linewidths=0.5,
-                    alpha=0.85,
+                    alpha=0.88,
                     zorder=4,
                 )
 
@@ -271,10 +331,10 @@ def plot_fig1bc_pes(
         if p_idx // ncols == nrows - 1 or p_idx + ncols >= n_panels:
             ax.set_xlabel("Bond distortion (%)")
         if p_idx % ncols == 0:
-            ax.set_ylabel("Relative energy $\Delta E$ (eV)")
+            ax.set_ylabel("Relative energy $\\Delta E$ (eV)")
         ax.axhline(0.0, color="#888888", linestyle=":", linewidth=0.8)
 
-    handles, labels = flat_axes[0].get_legend_handles_labels()
+    handles, _ = flat_axes[0].get_legend_handles_labels()
     h_circle = plt.Line2D(
         [0],
         [0],
@@ -283,7 +343,7 @@ def plot_fig1bc_pes(
         markerfacecolor="#555555",
         markeredgecolor="k",
         markersize=7,
-        label=f"$\mathrm{{RMSD}} \leq {threshold:.1f}$ Å (Success)",
+        label=f"$\\mathrm{{RMSD}} \\leq {threshold:.1f}$ Å (Success)",
     )
     h_cross = plt.Line2D(
         [0],
@@ -293,11 +353,10 @@ def plot_fig1bc_pes(
         markerfacecolor="#555555",
         markeredgecolor="k",
         markersize=7,
-        label=f"$\mathrm{{RMSD}} > {threshold:.1f}$ Å (Failed)",
+        label=f"$\\mathrm{{RMSD}} > {threshold:.1f}$ Å (Failed)",
     )
     all_handles = handles + [h_circle, h_cross]
 
-    # Hide unused subplots; if an empty slot exists in a multi-row grid, place the legend cleanly inside it
     if len(flat_axes) > n_panels:
         for empty_idx in range(n_panels, len(flat_axes)):
             flat_axes[empty_idx].axis("off")
@@ -335,13 +394,14 @@ def plot_fig1bc_pes(
 def plot_cross_charge_matrices(
     cross_matrices: Dict[str, Dict[str, Any]],
     out_dir: Path,
+    custom_order: List[str],
 ) -> Path:
     """
     Plot pairwise cross-charge RMSD(q_i, q_j) heatmaps across models to visualize
     whether each model captures distinct charge-state reconstructions.
     """
     set_pub_style()
-    names = list(cross_matrices.keys())
+    names = order_models(list(cross_matrices.keys()), custom_order)
     n_models = len(names)
     if n_models == 0:
         return out_dir / "fig_cross_charge_sensitivity.png"
@@ -386,7 +446,7 @@ def plot_cross_charge_matrices(
         axes[r][c].axis("off")
 
     fig.suptitle(
-        "Cross-Charge Structural Sensitivity $\mathrm{RMSD}(q_i, q_j)$ Across Charge States",
+        r"Cross-Charge Structural Sensitivity $\mathrm{RMSD}(q_i, q_j)$ Across Charge States",
         y=1.02,
         fontsize=13,
     )
@@ -513,6 +573,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Plot PRX Energy Fig. 1a-c & cross-charge RMSD figures.")
     parser.add_argument("--config", type=str, default="config.yaml", help="Path to config.yaml")
     parser.add_argument("--demo", action="store_true", help="Run with synthetic demo data to preview figures")
+    parser.add_argument(
+        "--model-order",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Optional custom display order of model names",
+    )
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -523,6 +590,7 @@ def main() -> None:
     threshold = float(config["evaluation"].get("rmsd_threshold", 0.10))
     defect_label = config["dataset"].get("defect_name", "V_Sb(1)")
     highlight_charges = [int(q) for q in config["plotting"].get("pes_highlight_charges", [0, -3])]
+    custom_order = args.model_order or config.get("plotting", {}).get("model_order") or DEFAULT_MODEL_ORDER
 
     if args.demo:
         df_summary, df_detailed, cross_matrices = generate_demo_data()
@@ -535,9 +603,9 @@ def main() -> None:
         with open(matrix_json, "r", encoding="utf-8") as f:
             cross_matrices = json.load(f)
 
-    f1 = plot_fig1a_rmsd(df_summary, threshold, defect_label, out_dir)
-    f2 = plot_fig1bc_pes(df_detailed, highlight_charges, threshold, defect_label, out_dir)
-    f3 = plot_cross_charge_matrices(cross_matrices, out_dir)
+    f1 = plot_fig1a_rmsd(df_summary, threshold, defect_label, out_dir, custom_order)
+    f2 = plot_fig1bc_pes(df_detailed, highlight_charges, threshold, defect_label, out_dir, custom_order)
+    f3 = plot_cross_charge_matrices(cross_matrices, out_dir, custom_order)
 
     print(f"[INFO] Generated Fig. 1a ground-state RMSD plot:      {f1}")
     print(f"[INFO] Generated Fig. 1b/c PES distortion plot:       {f2}")

@@ -37,6 +37,14 @@ plotting:
   - -1
   - 0
   - 1
+  model_order:
+  - DFT Reference
+  - MACE-POLAR-1-M (FT Stage2)
+  - MACE-POLAR-1-M (FT)
+  - MACE-POLAR-1-M (pbc)
+  - MACE-MH-1 (Local)
+  - MACE-MPA-0-Medium (Local)
+  - MACE-OMAT-0-Medium (Local)
 models:
 - name: MACE-POLAR-1-M (pbc)
   type: mace_polar
@@ -65,6 +73,12 @@ models:
 - name: MACE-POLAR-1-M (FT)
   type: mace_polar
   model_path: ./model/polar_1m_finetuned/polar_1m_v_sb1_pbe.model
+  device: cpu
+  default_dtype: float32
+  pbc_handling: pbc
+- name: MACE-POLAR-1-M (FT Stage2)
+  type: mace_polar
+  model_path: ./model/polar_1m_finetuned_stage2/polar_1m_v_sb1_pbe_stage2.model
   device: cpu
   default_dtype: float32
   pbc_handling: pbc

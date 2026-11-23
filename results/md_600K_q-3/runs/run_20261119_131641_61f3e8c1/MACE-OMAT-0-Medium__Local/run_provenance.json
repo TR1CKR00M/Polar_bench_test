@@ -1,0 +1,56 @@
+{
+  "run_dir": "results/md_600K_q-3/runs/run_20261119_131641_61f3e8c1",
+  "timestamp_iso": "2026-11-20T02:14:54.469625",
+  "git_commit": "unknown",
+  "start_mode": "fresh",
+  "resumed_from_dir": null,
+  "start_step": 0,
+  "end_step": 200000,
+  "target_steps": 200000,
+  "stop_reason": "completed",
+  "wall_time_s": 5194.565,
+  "model_cfg": {
+    "name": "MACE-OMAT-0-Medium (Local)",
+    "type": "mace_mp",
+    "model_path": "./model/mace-omat-0-medium.model",
+    "device": "cuda",
+    "default_dtype": "float32",
+    "head": "default"
+  },
+  "md_cfg": {
+    "ensemble": "NVT",
+    "thermostat": "Langevin",
+    "temperature_K": 600.0,
+    "timestep_fs": 1.0,
+    "friction_per_fs": 0.01,
+    "n_steps": 200000,
+    "log_interval": 100,
+    "seed": 1100,
+    "output_dir": "./results/md_600K_q-3",
+    "stopping_criteria": {
+      "max_temp_K": 1200.0,
+      "max_force_eV_A": 50.0,
+      "min_interatomic_dist_A": 1.4
+    }
+  },
+  "dataset": {
+    "charge": -3,
+    "spin_multiplicity": 1,
+    "supercell": [
+      1,
+      1,
+      1
+    ],
+    "n_atoms": 59,
+    "initial_structure_path": "./data/md_init/CONTCAR_q-3_VSb1"
+  },
+  "sha256": {
+    "config_yaml": "fd441ccefc291fdb0ba17a2614893477c505d86d8742aed04e655881b2c62fad",
+    "script_py": "fccf8b89d1ff0484f56493cda26a7c72fea48584f1b13fa7824e501604c000a0",
+    "model_checkpoint": "d4b14be9afa294eebdbe31a0280b26a0fa29715771e978cbfd3ca24e0d90307a",
+    "initial_structure_atoms": "04ccaa7f59b8c1a021825f9f9ede06e37a00e329223900c8387e47a54f798b47",
+    "resumed_from_traj": null,
+    "thermo_csv": "79de232996480c257edd1043ed95f1cd08f9ceaf3cc68bb2aa03f2087adbf858",
+    "traj_extxyz": "eacb4f824345ef0e1d14b0e64a9890279c567faa052e8d4a93f9071683945c5a"
+  }
+}

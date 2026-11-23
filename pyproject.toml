@@ -1,5 +1,33 @@
 [project]
 name = "polar-system-benchmark"
 version = "0.1.0"
+description = "Benchmarking and fine-tuning MACE-POLAR-1-M on charged point defects and 600 K NVT MD in Sb2Se3"
+readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "ase>=3.22",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+exclude = ["model", "data", "results", ".venv", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

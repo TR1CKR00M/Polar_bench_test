@@ -287,9 +287,9 @@ def run_grid_study(
         model_out_dir = base_out_dir / model_slug
         model_out_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"\n=======================================================")
+        print("\n=======================================================")
         print(f"[MODEL] Initializing calculator: {model_name} (type={model_cfg['type']}, device={model_cfg.get('device', 'cpu')})")
-        print(f"=======================================================")
+        print("=======================================================")
         try:
             calc = build_calculator(model_cfg)
         except Exception as exc:
